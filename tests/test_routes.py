@@ -74,7 +74,7 @@ def test_rate_limit():
 
 def test_static_assets_are_served_and_linked(client):
     html = client.get("/").get_data(as_text=True)
-    for path in ("/static/style.css", "/static/app.js"):
+    for path in ("/style.css", "/app.js"):
         assert path in html
         assert client.get(path).status_code == 200
 

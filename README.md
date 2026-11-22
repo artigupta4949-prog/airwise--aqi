@@ -50,3 +50,8 @@ ruff check . && mypy app && pytest   # 75 tests, 100% coverage, CI in .github/wo
 gcloud run deploy airwise --source . --region asia-south1 --allow-unauthenticated \
   --set-secrets GEMINI_API_KEY=gemini-key:latest
 ```
+
+## Deploy (Vercel)
+Import this repository into Vercel. The Flask entry point is declared in `pyproject.toml`;
+frontend assets are served from `public/`. `GEMINI_API_KEY` is optional and can be set in
+the Vercel project's Environment Variables.

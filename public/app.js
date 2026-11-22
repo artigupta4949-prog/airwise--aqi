@@ -1,96 +1,115 @@
 "use strict";
 
-const form = document.getElementById("profile-form");
-const statusEl = document.getElementById("status");
-const submitBtn = document.getElementById("submit");
-const result = document.getElementById("result");
-const cityError = document.getElementById("city-error");
-const cityInput = document.getElementById("city");
+(() => {
+  const REQUEST_TIMEOUT_MS = 15000;
+  const MIN_CITY_LENGTH = 2;
 
-function setStatus(text) { statusEl.textContent = text; }
+  const form = document.getElementById("profile-form");
+  const statusEl = document.getElementById("status");
+  const submitBtn = document.getElementById("submit");
+  const result = document.getElementById("result");
+  const cityError = document.getElementById("city-error");
+  const cityInput = document.getElementById("city");
 
-function showCityError(message) {
-  cityError.hidden = !message;
-  cityError.textContent = message || "";
-  cityInput.setAttribute("aria-invalid", message ? "true" : "false");
-}
+  const setStatus = (text) => { statusEl.textContent = text; };
 
-// Builds list items with textContent only, so server data is never parsed as HTML.
-function renderActions(id, items) {
-  const list = document.getElementById(id);
-  list.replaceChildren(...items.map((a) => {
+  function showCityError(message) {
+    cityError.hidden = !message;
+    cityError.textContent = message || "";
+    cityInput.setAttribute("aria-invalid", message ? "true" : "false");
+  }
+
+  function actionItem({ title, why, impact }) {
     const li = document.createElement("li");
-    for (const [cls, tag, text] of [["", "strong", a.title], ["why", "span", a.why], ["impact", "span", `Impact: ${a.impact}`]]) {
+    const parts = [
+      ["strong", "", title],
+      ["span", "why", why],
+      ["span", "impact", `Impact: ${impact}`],
+    ];
+    for (const [tag, cls, text] of parts) {
       const el = document.createElement(tag);
       if (cls) el.className = cls;
-      el.textContent = text;
+      el.textContent = text; // textContent only: server data is never parsed as HTML
       li.append(el);
     }
     return li;
-  }));
-}
-
-function markerPosition(aqi) {
-  const stops = [50, 100, 150, 200, 300, 500];
-  const seg = 100 / stops.length;
-  let low = 0;
-  for (let i = 0; i < stops.length; i++) {
-    if (aqi <= stops[i]) return i * seg + ((aqi - low) / (stops[i] - low)) * seg;
-    low = stops[i];
   }
-  return 100;
-}
 
-function render(data) {
-  document.getElementById("result-title").textContent = `${data.place}: ${data.label}`;
-  document.getElementById("summary").textContent = data.summary;
-  document.getElementById("data-source").textContent =
-    `Data source: ${data.data_source || "Open-Meteo"}. ${data.disclaimer || "Impact estimates are directional."}`;
-  document.getElementById("marker").style.left = `calc(${markerPosition(data.aqi)}% - 2px)`;
-  const narrative = document.getElementById("narrative");
-  narrative.hidden = !data.narrative;
-  narrative.textContent = data.narrative || "";
-  renderActions("routines", data.routines);
-  renderActions("indoor", data.indoor);
-  renderActions("alternatives", data.alternatives);
-  result.hidden = false;
-  result.focus();
-}
+  const renderActions = (id, items) =>
+    document.getElementById(id).replaceChildren(...items.map(actionItem));
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  showCityError("");
-  const fd = new FormData(form);
-  const city = String(fd.get("city") || "").trim();
-  if (city.length < 2) {
-    showCityError("Enter your city name.");
-    cityInput.focus();
-    return;
+  function render(data) {
+    document.getElementById("result-title").textContent = `${data.place}: ${data.label}`;
+    document.getElementById("summary").textContent = data.summary;
+    document.getElementById("data-source").textContent =
+      `Data source: ${data.data_source}. ${data.disclaimer}`;
+    document.getElementById("marker").style.left = `calc(${data.gauge_position}% - 2px)`;
+    document.getElementById("gauge").setAttribute("aria-label",
+      `AQI ${data.aqi}: ${data.label}`);
+    const narrative = document.getElementById("narrative");
+    narrative.hidden = !data.narrative;
+    narrative.textContent = data.narrative || "";
+    renderActions("routines", data.routines);
+    renderActions("indoor", data.indoor);
+    renderActions("alternatives", data.alternatives);
+    result.hidden = false;
+    result.focus();
   }
-  const payload = {
-    city,
-    home: fd.get("home"),
-    commute: fd.get("commute"),
-    heating: fd.get("heating"),
-    groups: fd.getAll("groups"),
-    manual_aqi: fd.get("manual_aqi"),
-  };
 
-  submitBtn.disabled = true;
-  setStatus("Checking today's air quality…");
-  try {
+  function buildPayload(city) {
+    const fd = new FormData(form);
+    return {
+      city,
+      home: fd.get("home"),
+      commute: fd.get("commute"),
+      heating: fd.get("heating"),
+      groups: fd.getAll("groups"),
+      manual_aqi: fd.get("manual_aqi"),
+    };
+  }
+
+  async function requestAdvice(payload) {
     const res = await fetch("/api/advice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
-    setStatus("Your plan is ready.");
-    render(data);
-  } catch (err) {
-    setStatus(err.message);
-  } finally {
-    submitBtn.disabled = false;
+    return data;
   }
-});
+
+  function friendlyError(err) {
+    if (err.name === "TimeoutError") return "The request took too long. Please try again.";
+    if (err instanceof TypeError) return "Network problem. Check your connection and try again.";
+    return err.message;
+  }
+
+  async function onSubmit(event) {
+    event.preventDefault();
+    showCityError("");
+    const city = String(new FormData(form).get("city") || "").trim();
+    if (city.length < MIN_CITY_LENGTH) {
+      showCityError("Enter your city name.");
+      cityInput.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    form.setAttribute("aria-busy", "true");
+    setStatus("Checking today's air quality…");
+    try {
+      const data = await requestAdvice(buildPayload(city));
+      setStatus("Your plan is ready.");
+      render(data);
+    } catch (err) {
+      setStatus(friendlyError(err));
+    } finally {
+      submitBtn.disabled = false;
+      form.removeAttribute("aria-busy");
+    }
+  }
+
+  form.addEventListener("submit", onSubmit);
+})();

@@ -1,7 +1,9 @@
 """HTTP routes."""
 from __future__ import annotations
 
-from flask import Blueprint, Response, current_app, jsonify, render_template, request
+from pathlib import Path
+
+from flask import Blueprint, Response, current_app, jsonify, render_template, request, send_from_directory
 
 from . import aqi as aqi_mod
 from .advisor import build_advice
@@ -13,9 +15,23 @@ bp = Blueprint("main", __name__)
 DISCLAIMER = "Impact estimates are directional, not medical measurements."
 
 
+def _send_public_asset(filename: str) -> Response:
+    return send_from_directory(Path(current_app.root_path).parent / "public", filename)
+
+
 @bp.get("/")
 def index() -> str:
     return render_template("index.html")
+
+
+@bp.get("/app.js")
+def app_js() -> Response:
+    return _send_public_asset("app.js")
+
+
+@bp.get("/style.css")
+def style_css() -> Response:
+    return _send_public_asset("style.css")
 
 
 @bp.get("/healthz")

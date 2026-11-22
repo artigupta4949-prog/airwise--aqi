@@ -63,3 +63,4 @@ h3 { margin: 1.6rem 0 .5rem; }
 .actions .impact { display: block; font-weight: 600; margin-top: .15rem; }
 footer { padding-block: 0 2.5rem; font-size: .9rem; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .marker { transition: none; } }
+.noscript { max-width: 44rem; margin: 1rem auto; padding: .8rem 1.25rem; background: #fff3cd; color: #4d3b00; }

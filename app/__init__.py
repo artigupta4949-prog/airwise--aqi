@@ -16,7 +16,7 @@ def create_app(config: dict | None = None) -> Flask:
     """Application factory."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=None)
     app.config.update(DEFAULTS)
     if config:
         app.config.update(config)
