@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AirWise: smog-smart daily plans for your household</title>
   <meta name="description" content="Get a personal plan to cut your family's exposure to smog and urban air pollution.">
-  <link rel="stylesheet" href="/style.css">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#eef0ee">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <a class="skip" href="#main">Skip to main content</a>
@@ -16,6 +18,8 @@
     <p class="lede">Tell us where you live and how your household gets through the day. We check today's air and build a plan that shows what each choice does for you.</p>
   </header>
 
+  <noscript><p class="noscript">AirWise needs JavaScript to build your plan. Please enable it and reload.</p></noscript>
+
   <main id="main">
     <section class="problem" aria-labelledby="problem-title">
       <h2 id="problem-title">A plan for your household, not just a number</h2>
@@ -23,7 +27,7 @@
       heating and vulnerable household members to recommend actions that reduce exposure and emissions.</p>
     </section>
 
-    <form id="profile-form" novalidate>
+    <form id="profile-form" aria-labelledby="problem-title" novalidate>
       <div class="field">
         <label for="city">City</label>
         <input id="city" name="city" type="text" autocomplete="address-level2" required maxlength="80" aria-describedby="city-help city-error">
@@ -108,6 +112,6 @@
     <p>Air data from Open-Meteo. Impact figures are rough estimates, not medical advice. If someone has trouble breathing, contact a doctor.</p>
   </footer>
 
-  <script src="/app.js" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </body>
 </html>

@@ -58,3 +58,19 @@ def test_all_supported_aqi_levels_return_complete_plan(aqi):
     assert advice["aqi"] == aqi
     assert advice["summary"]
     assert advice["routines"] and advice["indoor"] and advice["alternatives"]
+
+
+def test_moderate_air_keeps_outdoor_advice_light():
+    advice = build_advice(profile(), 80)
+    assert "Normal outdoor activity" in advice["routines"][0]["title"]
+    assert "Unusually sensitive" in advice["summary"]
+
+
+def test_boundary_at_poor_threshold():
+    assert "Keep outdoor activity short" in build_advice(profile(), 101)["routines"][0]["title"]
+    assert "Normal outdoor" in build_advice(profile(), 100)["routines"][0]["title"]
+
+
+def test_car_commuter_gets_recirculation_advice():
+    advice = build_advice(profile(commute="car"), 160)
+    assert any("recirculation" in a["title"] for a in advice["routines"])

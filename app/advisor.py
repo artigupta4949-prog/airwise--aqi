@@ -3,16 +3,25 @@
 Each action carries an estimated exposure impact so users see why it matters.
 Impact figures are rough, directional estimates, not medical measurements.
 """
-from .aqi import categorize
+from __future__ import annotations
+
+from .aqi import categorize, gauge_position
 from .validation import Profile
 
+# AQI thresholds that change the advice (US EPA scale).
+GOOD_MAX = 50
+POOR_ABOVE = 100  # above this, sensitive people and everyone outdoors feel it
+SEVERE_ABOVE = 150
+OPEN_AIR_COMMUTES = frozenset({"walk", "cycle", "two_wheeler"})
+COMBUSTION_HEATING = frozenset({"wood_coal", "gas"})
 
-def _action(title: str, why: str, impact: str) -> dict:
+
+def _action(title: str, why: str, impact: str) -> dict[str, str]:
     return {"title": title, "why": why, "impact": impact}
 
 
-def _routines(profile: Profile, aqi: int) -> list[dict]:
-    poor, severe = aqi > 100, aqi > 150
+def _routines(profile: Profile, aqi: int) -> list[dict[str, str]]:
+    poor, severe = aqi > POOR_ABOVE, aqi > SEVERE_ABOVE
     out = []
     if severe:
         out += [
@@ -35,7 +44,7 @@ def _routines(profile: Profile, aqi: int) -> list[dict]:
         out.append(_action("Limit outdoor time for children, older adults and anyone with asthma",
                            "These groups are affected at lower concentrations.",
                            "Reduces risk of symptoms and clinic visits."))
-    if profile.commute in {"walk", "cycle", "two_wheeler"} and poor:
+    if profile.commute in OPEN_AIR_COMMUTES and poor:
         out.append(_action("Wear a well-fitted N95 or FFP2 mask on your commute",
                            "Open-air travel gives direct exposure; cloth and surgical masks filter little PM2.5.",
                            "A sealed N95 can remove about 95% of fine particles."))
@@ -46,8 +55,8 @@ def _routines(profile: Profile, aqi: int) -> list[dict]:
     return out
 
 
-def _indoor(profile: Profile, aqi: int) -> list[dict]:
-    poor = aqi > 100
+def _indoor(profile: Profile, aqi: int) -> list[dict[str, str]]:
+    poor = aqi > POOR_ABOVE
     out = []
     if poor:
         out += [
@@ -69,14 +78,14 @@ def _indoor(profile: Profile, aqi: int) -> list[dict]:
         out.append(_action("Open windows to flush indoor air",
                            "Outdoor air is cleaner than most indoor air today.",
                            "Clears cooking and cleaning pollutants."))
-    if profile.heating in {"wood_coal", "gas"}:
+    if profile.heating in COMBUSTION_HEATING:
         out.append(_action("Ventilate when heating and never burn fuel in a closed room",
                            "Combustion adds particles and carbon monoxide indoors.",
                            "Reduces a serious indoor hazard."))
     return out
 
 
-def _alternatives(profile: Profile) -> list[dict]:
+def _alternatives(profile: Profile) -> list[dict[str, str]]:
     out = []
     if profile.heating == "wood_coal":
         out.append(_action("Switch to an electric heater or cleaner fuel when possible",
@@ -99,20 +108,22 @@ def _alternatives(profile: Profile) -> list[dict]:
 
 def _summary(label: str, aqi: int, vulnerable: bool) -> str:
     base = f"AQI {aqi} is {label.lower()}."
-    if aqi <= 50:
+    if aqi <= GOOD_MAX:
         return base + " Air is clean enough for all normal activity."
-    if aqi <= 100:
+    if aqi <= POOR_ABOVE:
         return base + " Unusually sensitive people should watch for symptoms."
     note = " Your household includes people at higher risk." if vulnerable else ""
     return base + " Reduce exposure with the steps below." + note
 
 
 def build_advice(profile: Profile, aqi: int) -> dict:
+    """Build the full advice payload for a profile at a given AQI."""
     key, label = categorize(aqi)
     return {
         "aqi": aqi,
         "category": key,
         "label": label,
+        "gauge_position": gauge_position(aqi),
         "summary": _summary(label, aqi, bool(profile.groups)),
         "routines": _routines(profile, aqi),
         "indoor": _indoor(profile, aqi),
