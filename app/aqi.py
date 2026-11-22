@@ -57,6 +57,7 @@ def gauge_position(aqi: int) -> float:
         if aqi <= upper:
             return round(index * segment + (aqi - lower) / (upper - lower) * segment, 1)
         lower = upper
+    return 100.0
 
 
 @lru_cache(maxsize=_GEOCODE_CACHE_SIZE)

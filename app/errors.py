@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import logging
 
-from flask import Flask, Response, jsonify, request
-from werkzeug.exceptions import HTTPException
+from flask import Flask, Response, current_app, jsonify, request
+from werkzeug.exceptions import HTTPException, InternalServerError
 
 log = logging.getLogger(__name__)
 
@@ -23,10 +23,12 @@ def _handle_http_error(exc: HTTPException) -> tuple[Response, int] | HTTPExcepti
     return jsonify(error=_MESSAGES.get(code, exc.name)), code
 
 
-def _handle_unexpected_error(exc: Exception) -> tuple[Response, int] | Exception:
+def _handle_unexpected_error(exc: Exception) -> tuple[Response, int] | Response:
     """Return JSON for API failures while preserving normal HTML error behavior."""
     if not request.path.startswith("/api/"):
-        return exc
+        return current_app.response_class(
+            InternalServerError().get_body(), status=500, content_type="text/html; charset=utf-8"
+        )
     log.exception("Unhandled API error", exc_info=exc)
     return jsonify(error="An unexpected error occurred."), 500
 
