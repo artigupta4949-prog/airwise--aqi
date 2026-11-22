@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AirWise: smog-smart daily plans for your household</title>
+  <meta name="description" content="Get a personal plan to cut your family's exposure to smog and urban air pollution.">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to main content</a>
+
+  <header class="masthead">
+    <p class="brand">AirWise</p>
+    <h1>Breathe easier through smog season</h1>
+    <p class="lede">Tell us where you live and how your household gets through the day. We check today's air and build a plan that shows what each choice does for you.</p>
+  </header>
+
+  <main id="main">
+    <form id="profile-form" novalidate>
+      <div class="field">
+        <label for="city">City</label>
+        <input id="city" name="city" type="text" autocomplete="address-level2" required maxlength="80" aria-describedby="city-help city-error">
+        <p id="city-help" class="hint">For example: Delhi, Lahore, Beijing.</p>
+        <p id="city-error" class="error" role="alert" hidden></p>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="home">Home</label>
+          <select id="home" name="home">
+            <option value="apartment">Apartment</option>
+            <option value="house">House</option>
+            <option value="shared">Shared or rented room</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="commute">Main way you travel</label>
+          <select id="commute" name="commute">
+            <option value="public">Public transport</option>
+            <option value="walk">Walk</option>
+            <option value="cycle">Cycle</option>
+            <option value="two_wheeler">Motorbike or scooter</option>
+            <option value="car">Car</option>
+            <option value="remote">Mostly at home</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="heating">Winter heating</label>
+          <select id="heating" name="heating">
+            <option value="none">None</option>
+            <option value="electric">Electric</option>
+            <option value="gas">Gas</option>
+            <option value="wood_coal">Wood, coal or biomass</option>
+          </select>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend>Anyone in your household who is more at risk?</legend>
+        <label class="check"><input type="checkbox" name="groups" value="children"> Children</label>
+        <label class="check"><input type="checkbox" name="groups" value="elderly"> Older adults</label>
+        <label class="check"><input type="checkbox" name="groups" value="asthma"> Asthma or lung conditions</label>
+        <label class="check"><input type="checkbox" name="groups" value="pregnant"> Pregnancy</label>
+      </fieldset>
+
+      <details>
+        <summary>Enter the AQI yourself</summary>
+        <div class="field">
+          <label for="manual_aqi">AQI (0 to 500)</label>
+          <input id="manual_aqi" name="manual_aqi" type="number" inputmode="numeric" min="0" max="500" aria-describedby="aqi-help">
+          <p id="aqi-help" class="hint">Use this if live data is unavailable for your city.</p>
+        </div>
+      </details>
+
+      <button type="submit" id="submit">Get my plan</button>
+    </form>
+
+    <div id="status" role="status" aria-live="polite" class="status"></div>
+
+    <section id="result" aria-labelledby="result-title" tabindex="-1" hidden>
+      <h2 id="result-title"></h2>
+      <div class="gauge" aria-hidden="true">
+        <span class="seg s-good"></span><span class="seg s-moderate"></span><span class="seg s-sensitive"></span>
+        <span class="seg s-unhealthy"></span><span class="seg s-very_unhealthy"></span><span class="seg s-hazardous"></span>
+        <span id="marker" class="marker"></span>
+      </div>
+      <p id="summary" class="summary"></p>
+      <p id="narrative" class="narrative" hidden></p>
+
+      <h3>Today's routine</h3>
+      <ul id="routines" class="actions"></ul>
+      <h3>Cleaner air at home</h3>
+      <ul id="indoor" class="actions"></ul>
+      <h3>Lower-emission choices</h3>
+      <ul id="alternatives" class="actions"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Air data from Open-Meteo. Impact figures are rough estimates, not medical advice. If someone has trouble breathing, contact a doctor.</p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
