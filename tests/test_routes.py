@@ -11,6 +11,7 @@ def test_index_is_accessible_html(client):
     assert 'class="skip"' in html
     assert 'for="city"' in html
     assert 'aria-live="polite"' in html
+    assert 'role="img"' in html
 
 
 def test_security_headers(client):
@@ -112,3 +113,13 @@ def test_proxy_header_trusted_only_when_enabled():
 
 def test_non_api_404_is_not_json(client):
     assert client.get("/nope").status_code == 404
+
+
+def test_unexpected_api_error_is_json(client, monkeypatch):
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("app.routes.build_advice", boom)
+    res = client.post("/api/advice", json=BODY)
+    assert res.status_code == 500
+    assert res.get_json() == {"error": "An unexpected error occurred."}

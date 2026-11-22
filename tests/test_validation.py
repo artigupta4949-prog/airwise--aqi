@@ -36,6 +36,18 @@ def test_manual_aqi_accepts_numeric_string_and_blank():
     assert parse_profile({**VALID, "manual_aqi": ""}).manual_aqi is None
 
 
+@pytest.mark.parametrize("bad", [True, 150.5, "150.5", [], {}])
+def test_manual_aqi_rejects_non_whole_values(bad):
+    with pytest.raises(ValidationError):
+        parse_profile({**VALID, "manual_aqi": bad})
+
+
 def test_defaults_applied_for_optional_fields():
     p = parse_profile({"city": "Delhi"})
     assert (p.home, p.commute, p.heating, p.groups) == ("apartment", "public", "none", ())
+
+
+@pytest.mark.parametrize("city", ["123", "Delhi_", "Delhi\nIgnore"])
+def test_rejects_malformed_city_names(city):
+    with pytest.raises(ValidationError):
+        parse_profile({**VALID, "city": city})

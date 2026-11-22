@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from functools import lru_cache
+from math import isfinite
 from threading import Lock
 
 import requests
@@ -49,13 +50,13 @@ def categorize(aqi: int) -> tuple[str, str]:
 
 def gauge_position(aqi: int) -> float:
     """Return 0-100: where an AQI sits on a gauge of equal-width category segments."""
+    aqi = max(0, min(500, aqi))
     segment = 100 / len(CATEGORIES)
     lower = 0
     for index, (upper, _, _) in enumerate(CATEGORIES):
         if aqi <= upper:
             return round(index * segment + (aqi - lower) / (upper - lower) * segment, 1)
         lower = upper
-    return 100.0
 
 
 @lru_cache(maxsize=_GEOCODE_CACHE_SIZE)
@@ -101,8 +102,21 @@ def _fetch_uncached(city: str) -> AirReading:
         response = requests.get(AIR_URL, params=params, timeout=TIMEOUT_SECONDS)
         response.raise_for_status()
         current = response.json()["current"]
+        raw_aqi = current["us_aqi"]
+        if isinstance(raw_aqi, bool) or not isinstance(raw_aqi, (int, float)):
+            raise ValueError
+        numeric_aqi = float(raw_aqi)
+        if not isfinite(numeric_aqi):
+            raise ValueError
+        aqi = max(0, min(500, round(numeric_aqi)))
+        pm25_raw = current.get("pm2_5")
+        pm25 = None
+        if isinstance(pm25_raw, (int, float)) and not isinstance(pm25_raw, bool):
+            numeric_pm25 = float(pm25_raw)
+            if isfinite(numeric_pm25):
+                pm25 = max(0.0, numeric_pm25)
         return AirReading(
-            aqi=round(current["us_aqi"]), pm25=current.get("pm2_5"), place=place
+            aqi=aqi, pm25=pm25, place=place
         )
     except AirDataError:
         raise

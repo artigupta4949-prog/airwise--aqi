@@ -1,8 +1,12 @@
 """Consistent JSON error responses for the API."""
 from __future__ import annotations
 
+import logging
+
 from flask import Flask, Response, jsonify, request
 from werkzeug.exceptions import HTTPException
+
+log = logging.getLogger(__name__)
 
 _MESSAGES = {
     404: "Not found.",
@@ -19,5 +23,14 @@ def _handle_http_error(exc: HTTPException) -> tuple[Response, int] | HTTPExcepti
     return jsonify(error=_MESSAGES.get(code, exc.name)), code
 
 
+def _handle_unexpected_error(exc: Exception) -> tuple[Response, int] | Exception:
+    """Return JSON for API failures while preserving normal HTML error behavior."""
+    if not request.path.startswith("/api/"):
+        return exc
+    log.exception("Unhandled API error", exc_info=exc)
+    return jsonify(error="An unexpected error occurred."), 500
+
+
 def register_error_handlers(app: Flask) -> None:
     app.register_error_handler(HTTPException, _handle_http_error)
+    app.register_error_handler(Exception, _handle_unexpected_error)

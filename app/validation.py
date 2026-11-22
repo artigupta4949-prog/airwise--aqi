@@ -45,10 +45,14 @@ def _parse_groups(raw: Any) -> tuple[str, ...]:
 def _parse_manual_aqi(raw: Any) -> int | None:
     if raw in (None, ""):
         return None
-    try:
-        value = int(raw)
-    except (TypeError, ValueError):
+    if isinstance(raw, (bool, float)):
         raise ValidationError("AQI must be a whole number.") from None
+    if isinstance(raw, int):
+        value = raw
+    elif isinstance(raw, str) and re.fullmatch(r"[+-]?\d+", raw.strip()):
+        value = int(raw)
+    else:
+        raise ValidationError("AQI must be a whole number.")
     if not AQI_MIN <= value <= AQI_MAX:
         raise ValidationError(f"AQI must be between {AQI_MIN} and {AQI_MAX}.")
     return value
@@ -60,7 +64,11 @@ def parse_profile(data: Any) -> Profile:
         raise ValidationError("Request body must be a JSON object.")
 
     city = str(data.get("city", "")).strip()
-    if not _CITY_RE.match(city):
+    if (
+        not _CITY_RE.fullmatch(city)
+        or "_" in city
+        or not any(character.isalpha() for character in city)
+    ):
         raise ValidationError("Enter a city name of 2 to 80 letters.")
 
     return Profile(

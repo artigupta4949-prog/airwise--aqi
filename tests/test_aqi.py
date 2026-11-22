@@ -95,3 +95,25 @@ def test_gauge_position(value, expected):
 def test_gauge_position_is_monotonic():
     positions = [gauge_position(v) for v in range(0, 501, 10)]
     assert positions == sorted(positions)
+
+
+def test_gauge_position_is_clamped():
+    assert gauge_position(-10) == 0.0
+    assert gauge_position(999) == 100.0
+
+
+def test_live_reading_clamps_aqi_and_normalises_pm25(monkeypatch):
+    monkeypatch.setattr(aqi.requests, "get", fake_get(
+        air={"current": {"us_aqi": 999.4, "pm2_5": -4.2}}
+    ))
+    reading = aqi.fetch_air_quality("Delhi")
+    assert reading.aqi == 500
+    assert reading.pm25 == 0.0
+
+
+@pytest.mark.parametrize("pm25", [None, "unknown", float("nan")])
+def test_live_reading_accepts_missing_or_invalid_pm25(monkeypatch, pm25):
+    monkeypatch.setattr(aqi.requests, "get", fake_get(
+        air={"current": {"us_aqi": 182, "pm2_5": pm25}}
+    ))
+    assert aqi.fetch_air_quality("Delhi").pm25 is None

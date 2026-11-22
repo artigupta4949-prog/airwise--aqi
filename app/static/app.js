@@ -44,6 +44,8 @@
     document.getElementById("data-source").textContent =
       `Data source: ${data.data_source}. ${data.disclaimer}`;
     document.getElementById("marker").style.left = `calc(${data.gauge_position}% - 2px)`;
+    document.getElementById("gauge").setAttribute("aria-label",
+      `AQI ${data.aqi}: ${data.label}`);
     const narrative = document.getElementById("narrative");
     narrative.hidden = !data.narrative;
     narrative.textContent = data.narrative || "";
