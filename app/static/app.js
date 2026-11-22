@@ -44,6 +44,8 @@ function markerPosition(aqi) {
 function render(data) {
   document.getElementById("result-title").textContent = `${data.place}: ${data.label}`;
   document.getElementById("summary").textContent = data.summary;
+  document.getElementById("data-source").textContent =
+    `Data source: ${data.data_source || "Open-Meteo"}. ${data.disclaimer || "Impact estimates are directional."}`;
   document.getElementById("marker").style.left = `calc(${markerPosition(data.aqi)}% - 2px)`;
   const narrative = document.getElementById("narrative");
   narrative.hidden = !data.narrative;

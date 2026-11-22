@@ -23,11 +23,20 @@ def test_healthz(client):
     assert client.get("/healthz").get_json() == {"status": "ok"}
 
 
+def test_page_explains_problem_and_solution(client):
+    html = client.get("/").get_data(as_text=True)
+    assert "A plan for your household" in html
+    assert "Air pollution affects people differently" in html
+    assert 'id="data-source"' in html
+
+
 def test_advice_with_manual_aqi(client):
     res = client.post("/api/advice", json=BODY)
     data = res.get_json()
     assert res.status_code == 200
     assert data["category"] == "unhealthy" and data["routines"]
+    assert data["data_source"] == "Manual AQI"
+    assert "directional" in data["disclaimer"]
 
 
 def test_advice_rejects_bad_input(client):
@@ -40,6 +49,7 @@ def test_live_lookup_used_when_no_manual_aqi(client, monkeypatch):
                         lambda city: {"aqi": 40, "pm25": 9.0, "place": "Testville, IN"})
     data = client.post("/api/advice", json={"city": "Testville"}).get_json()
     assert data["aqi"] == 40 and data["place"] == "Testville, IN"
+    assert data["data_source"] == "Open-Meteo"
 
 
 def test_lookup_failure_returns_502(client, monkeypatch):

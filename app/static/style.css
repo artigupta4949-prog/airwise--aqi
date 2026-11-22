@@ -19,6 +19,9 @@ body { margin: 0; background: var(--haze); line-height: 1.55; }
 .brand { margin: 0; font-weight: 700; color: var(--muted); }
 h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; margin: .4rem 0 .8rem; }
 .lede { max-width: 38rem; color: var(--muted); margin: 0; }
+.problem { border-left: 4px solid var(--ink); padding: .1rem 0 .1rem 1rem; margin: 0 0 1.25rem; }
+.problem h2 { margin: 0; font-size: 1.15rem; }
+.problem p { margin: .35rem 0 0; color: var(--muted); }
 form { background: var(--paper); border: 1px solid var(--line); padding: 1.5rem; display: grid; gap: 1.1rem; }
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
 label, legend { font-weight: 600; }
@@ -50,6 +53,7 @@ button[disabled] { opacity: .65; cursor: progress; }
 .s-very_unhealthy { background: var(--very_unhealthy); } .s-hazardous { background: var(--hazardous); }
 .marker { position: absolute; top: -.45rem; width: 4px; height: 1.8rem; background: var(--ink); outline: 2px solid #fff; transition: left .5s ease; }
 .summary { font-size: 1.15rem; font-weight: 600; margin: 0 0 .8rem; }
+.data-source { font-size: .9rem; color: var(--muted); margin: .6rem 0 0; }
 .narrative { border-left: 4px solid var(--ink); padding-left: 1rem; color: var(--muted); }
 h3 { margin: 1.6rem 0 .5rem; }
 .actions { list-style: none; padding: 0; margin: 0; display: grid; gap: .8rem; }

@@ -49,3 +49,12 @@ def test_every_action_explains_impact():
     for section in ("routines", "indoor", "alternatives"):
         assert advice[section]
         assert all(a["title"] and a["why"] and a["impact"] for a in advice[section])
+
+
+@pytest.mark.parametrize("aqi", [0, 50, 100, 150, 200, 300, 500])
+def test_all_supported_aqi_levels_return_complete_plan(aqi):
+    advice = build_advice(profile(groups=["children", "pregnant"], commute="two_wheeler",
+                                 heating="gas"), aqi)
+    assert advice["aqi"] == aqi
+    assert advice["summary"]
+    assert advice["routines"] and advice["indoor"] and advice["alternatives"]

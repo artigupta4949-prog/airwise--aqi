@@ -41,5 +41,11 @@ def advice():
         value, place, pm25 = reading["aqi"], reading["place"], reading["pm25"]
 
     result = build_advice(profile, value)
-    result.update(place=place, pm25=pm25, narrative=personalize(profile, result, place))
+    result.update(
+        place=place,
+        pm25=pm25,
+        data_source="Manual AQI" if profile.manual_aqi is not None else "Open-Meteo",
+        narrative=personalize(profile, result, place),
+        disclaimer="Impact estimates are directional, not medical measurements.",
+    )
     return jsonify(result)
